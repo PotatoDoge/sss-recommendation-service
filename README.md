@@ -7,8 +7,8 @@ Project Structure
 -----------------
 
 SmartShoppingSystem-backend/\
-├── recommendation-service/    # Handles product recommendations (Hexagonal)\
-├── **product-catalog-service**/   # Manages products and inventory (Hexagonal)\
+├── **recommendation-service**/    # Handles product recommendations (Hexagonal)\
+├── product-catalog-service/   # Manages products and inventory (Hexagonal)\
 ├── user-service/              # Manages users and preferences (Onion)
 
 ---
@@ -27,19 +27,18 @@ SmartShoppingSystem-backend/\
 | **Onion Arch**       | Used in User Service                         |
 
 ---
+# Recommendation Service
 
-# Product Catalog Service
-
-The **Product Catalog Service** is a core component of the SmartShoppingSystem. It is responsible for managing all product-related data and exposing APIs for other services and clients to interact with the product catalog. The service is designed following the **Hexagonal Architecture**, ensuring a clean separation between domain logic and infrastructure concerns.
+The **Recommendation Service** is a crucial component of the SmartShoppingSystem. It consumes user activity events, processes them, and provides personalized product recommendations. The service follows the **Hexagonal Architecture**, ensuring separation between the core business logic and external systems (like Kafka or databases).
 
 ---
 
 ## 🧠 Responsibilities
 
-- Manage products, inventory, and categories.
-- Provide RESTful endpoints for product operations.
-- Publish Kafka events when product data changes (e.g., create/update/delete).
-- Integrate with a PostgreSQL database for data persistence.
+- Consume user activity events from Kafka.
+- Provide personalized product recommendations via a RESTful API.
+- Process data to generate dynamic, personalized product recommendations.
+- Publish events (e.g., product recommendations generated) to Kafka.
 
 ---
 
@@ -47,36 +46,35 @@ The **Product Catalog Service** is a core component of the SmartShoppingSystem. 
 
 The service follows **Hexagonal (Ports and Adapters) Architecture**, which includes:
 
-- **Domain Layer**: Business logic and core models.
-- **Application Layer**: Use cases and service orchestration.
+- **Domain Layer**: Core logic for recommendation generation.
+- **Application Layer**: Use cases for managing recommendations.
 - **Adapters**:
-    - **Inbound**: REST controllers.
-    - **Outbound**: Repositories (JPA), Kafka producers.
-- **Ports**: Interfaces used by the domain to abstract infrastructure.
+    - **Inbound**: REST controllers to expose APIs for product recommendations.
+    - **Outbound**: Kafka consumers to handle events like user activity and product events.
+- **Ports**: Interfaces that abstract the infrastructure like Kafka and REST APIs.
 
 ---
 
 ## 📡 REST Endpoints
 
-| Method | Endpoint             | Description              |
-|--------|----------------------|--------------------------|
-| GET    | `/products`          | Get all products         |
-| GET    | `/products/{id}`     | Get a product by ID      |
-| POST   | `/products`          | Create a new product     |
-| PUT    | `/products/{id}`     | Update an existing product |
-| DELETE | `/products/{id}`     | Delete a product         |
+| Method | Endpoint               | Description                        |
+|--------|------------------------|------------------------------------|
+| GET    | `/recommendations`      | Get product recommendations        |
+| GET    | `/recommendations/{userId}` | Get personalized recommendations for a user |
 
 ---
 
 ## 🔄 Kafka Integration
 
-- **Topic**: `product.events`
-- **Event Types**:
-    - `ProductCreated`
-    - `ProductUpdated`
-    - `ProductDeleted`
+- **Topic**: `user.activity`
+- **Event Type**:
+    - `UserActivityEvent`: Consumed by this service to trigger recommendations.
 
-These events can be consumed by services like the **Recommendation Service** to keep product information in sync.
+- **Topic**: `product.events`
+- **Event Type**:
+    - `ProductCreated`, `ProductUpdated`, `ProductDeleted`: Used to update the recommendation data.
+
+The **Recommendation Service** produces events on relevant Kafka topics to keep product and user data in sync across services.
 
 ---
 
@@ -84,7 +82,8 @@ These events can be consumed by services like the **Recommendation Service** to 
 
 1. **Navigate to the service folder**:
    ```bash
-   cd product-catalog-service
+   cd recommendation-service
+
 
 1. **Build the service:r**:
    ```bash
